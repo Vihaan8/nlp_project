@@ -5,6 +5,7 @@ from feature_extraction import process_data
 from models import MostFrequentBaseline, MultinomialNB
 from tfidf import compute_tfidf
 from evaluation import calculate_metrics, confusion_matrix
+from analysis import full_analysis
 
 def run_experiment(dataset_name, df, min_freq=1):
     print(f"\n{dataset_name} Dataset")
@@ -13,8 +14,8 @@ def run_experiment(dataset_name, df, min_freq=1):
     X, y, vocab = process_data(df, min_freq=min_freq)
     print(f"Features: {X.shape[1]}")
     
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42, stratify=y
+    X_train, X_test, y_train, y_test, idx_train, idx_test = train_test_split(
+        X, y, np.arange(len(X)), test_size=0.3, random_state=42, stratify=y
     )
     
     baseline = MostFrequentBaseline()
@@ -50,12 +51,22 @@ def run_experiment(dataset_name, df, min_freq=1):
         'metrics': metrics_raw,
         'confusion_matrix': cm_raw,
         'predictions': nb_pred_raw,
-        'y_test': y_test
+        'y_test': y_test,
+        'idx_test': idx_test,  
+        'model': nb_raw,       
+        'vocabulary': vocab  
     }
-
 if __name__ == '__main__':
     synthetic_df = load_synthetic()
     synthetic_results = run_experiment('Synthetic', synthetic_df)
-    
     real_df = load_real()
     real_results = run_experiment('Real', real_df, min_freq=3)
+    print("DETAILED ANALYSIS - REAL DATA")
+    full_analysis(
+        real_df, 
+        real_results['idx_test'],
+        real_results['y_test'],
+        real_results['predictions'],
+        real_results['model'],
+        real_results['vocabulary']
+    )
